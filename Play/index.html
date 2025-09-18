@@ -58,7 +58,7 @@
           sony_cdn: match.STREAMING_CDN?.sony_cdn
         };
 
-        // If user requested specific key (?id=123&cdn=cloudfront_cdn)
+        // If user requested specific key
         if (preferredKey && sourceMap[preferredKey] && sourceMap[preferredKey] !== "Unavailable") {
           return sourceMap[preferredKey];
         }
@@ -78,7 +78,7 @@
       // Get query params
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get("id");
-      const preferredKey = urlParams.get("cdn"); // use &cdn=sony_cdn etc.
+      const preferredKey = urlParams.get("cdn");
 
       if (!id) {
         document.body.innerHTML = "<p style='color:white;text-align:center'>No ID provided (?id=)</p>";
@@ -87,7 +87,7 @@
 
       const source = await getStreamUrl(id, preferredKey);
       if (!source) {
-        document.body.innerHTML = <p style='color:white;text-align:center'>No playable stream found for ID ${id}</p>;
+        document.body.innerHTML = `<p style="color:white;text-align:center">No playable stream found for ID ${id}</p>`;
         return;
       }
 
@@ -115,7 +115,8 @@
               }
             }
           });
-// Orientation lock on fullscreen
+
+          // Orientation lock on fullscreen
           document.addEventListener('fullscreenchange', () => {
             if (document.fullscreenElement) {
               if (screen.orientation && screen.orientation.lock) {
