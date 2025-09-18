@@ -1,1 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TG_@Cricinsider365</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <meta name="referrer" content="no-referrer">
 
+  <!-- Plyr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.css">
+
+  <style>
+    body {
+      background-color: #000;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    html, body {
+      height: 100%;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+    }
+    .plyr {
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- Video player -->
+  <video id="player" playsinline controls></video>
+
+  <!-- HLS.js & Plyr -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.1.4/dist/hls.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.min.js"></script>
+
+  <script>
+    async function getStreamUrl(id, preferredKey) {
+      try {
+        const res = await fetch("https://raw.githubusercontent.com/Jitendra-unatti/fancode/refs/heads/main/data/fancode.json");
+        const data = await res.json();
+
+        // Find match by match_id
+        const match = data.matches.find(m => m.match_id == id);
+        if (!match) throw new Error("Stream not found for ID " + id);
+
+        // Map of possible sources
+        const sourceMap = {
+          adfree_stream: match.adfree_stream,
+          dai_stream: match.dai_stream,
+          Primary_Playback_URL: match.STREAMING_CDN?.Primary_Playback_URL,
+          fancode_cdn: match.STREAMING_CDN?.fancode_cdn,
+          dai_google_cdn: match.STREAMING_CDN?.dai_google_cdn,
+          cloudfront_cdn: match.STREAMING_CDN?.cloudfront_cdn,
+          sony_cdn: match.STREAMING_CDN?.sony_cdn
+        };
+
+        // If user requested specific key (?id=123&cdn=cloudfront_cdn)
+        if (preferredKey && sourceMap[preferredKey] && sourceMap[preferredKey] !== "Unavailable") {
+          return sourceMap[preferredKey];
+        }
+
+        // Otherwise pick first available source
+        const sources = Object.values(sourceMap).filter(url => url && url !== "Unavailable");
+        return sources.length > 0 ? sources[0] : null;
+      } catch (err) {
+        console.error("Error loading JSON:", err);
+        return null;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const video = document.getElementById('player');
+
+      // Get query params
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get("id");
+      const preferredKey = urlParams.get("cdn"); // use &cdn=sony_cdn etc.
+
+      if (!id) {
+        document.body.innerHTML = "<p style='color:white;text-align:center'>No ID provided (?id=)</p>";
+        return;
+      }
+
+      const source = await getStreamUrl(id, preferredKey);
+      if (!source) {
+        document.body.innerHTML = <p style='color:white;text-align:center'>No playable stream found for ID ${id}</p>;
+        return;
+      }
+
+      if (Hls.isSupported()) {
+        const hls = new Hls({ maxMaxBufferLength: 100 });
+        hls.loadSource(source);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          const availableQualities = hls.levels.map(level => level.height).filter(Boolean);
+          const defaultQuality = availableQualities[0] || 360;
+
+          const player = new Plyr(video, {
+            controls: ['play-large', 'play', 'mute', 'volume', 'settings', 'fullscreen'],
+            quality: {
+              default: defaultQuality,
+              options: availableQualities,
+              forced: true,
+              onChange: (quality) => {
+                hls.levels.forEach((level, levelIndex) => {
+                  if (level.height === quality) {
+                    hls.currentLevel = levelIndex;
+                  }
+                });
+              }
+            }
+          });
+// Orientation lock on fullscreen
+          document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+              if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(err => {
+                  console.warn('Orientation lock failed:', err);
+                });
+              }
+            }
+          });
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = source;
+        new Plyr(video);
+      } else {
+        document.body.innerHTML = '<p style="color:white;text-align:center">Your browser does not support HLS playback.</p>';
+      }
+    });
+
+    // ===== Anti-iframe
+    if (window.top !== window.self) {
+      document.addEventListener('DOMContentLoaded', function () {
+        document.body.innerHTML = '<div style="color:white;text-align:center">Ab to copy mat kar chutiye</div>';
+      });
+    }
+
+    // ===== Optional Telegram join prompt
+    window.addEventListener("load", function () {
+      if (window.confirm("Join @Cricinsider365 for more live links?")) {
+        window.location.href = "https://t.me/+IhSW51QysxU3NzY1";
+      }
+    });
+  </script>
+</body>
+</html>
