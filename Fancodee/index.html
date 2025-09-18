@@ -39,8 +39,8 @@
       const a = document.createElement('a');
       a.href = href;
       a.target = "_blank";
-      a.className = w-full sm:w-auto px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all ${extraClasses};
-      a.innerHTML = <i class="fas fa-play mr-2"></i> ${label};
+      a.className = `w-full sm:w-auto px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all ${extraClasses}`;
+      a.innerHTML = `<i class="fas fa-play mr-2"></i> ${label}`;
       return a;
     }
 
@@ -62,36 +62,46 @@
 
         matches.forEach(match => {
           const isLive = (match.status || '').toUpperCase() === 'LIVE';
+
           const imgSrc =
             match.image ||
-            (match.image_cdn && (match.image_cdn.APP  match.image_cdn.TATAPLAY  match.image_cdn.PLAYBACK  match.image_cdn.BG_IMAGE)) 
+            (match.image_cdn && (
+              match.image_cdn.APP ||
+              match.image_cdn.TATAPLAY ||
+              match.image_cdn.PLAYBACK ||
+              match.image_cdn.BG_IMAGE
+            )) ||
             'https://www.fancode.com/skillup-uploads/cms-media/Cricket_Fallback_Old_match-card.jpg';
 
           const card = document.createElement('div');
-          card.className = rounded-2xl overflow-hidden shadow-xl match-card border border-gray-800 ${isLive ? 'ring-2 ring-red-600' : ''};
+          card.className = `rounded-2xl overflow-hidden shadow-xl match-card border border-gray-800 ${isLive ? 'ring-2 ring-red-600' : ''}`;
 
           // Header image + LIVE badge
-          card.innerHTML = 
+          card.innerHTML = `
             <div class="relative">
               <img src="${imgSrc}" alt="${(match.title || 'Match')}" class="w-full h-48 sm:h-60 md:h-64 lg:h-72 object-cover object-top match-img">
-              ${isLive ? <span class="absolute top-3 left-3 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md live-badge">LIVE</span> : ''}
+              ${isLive ? `<span class="absolute top-3 left-3 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md live-badge">LIVE</span>` : ''}
             </div>
-          ;
-// Text + buttons
+          `;
+
+          // Text + buttons
           const title = match.title || 'Match';
           const tournament = match.tournament || '';
           const startTime = match.startTime || '';
-          const language = match.language ?  • ${match.language} : (match.STREAMING_CDN && match.STREAMING_CDN.language ?  • ${match.STREAMING_CDN.language} : '');
-          const sub1 = tournament ? ${tournament}${language} : (language ? language.slice(3) : '');
-          const sub2 = startTime ? Start: ${startTime} : '';
+          const language = match.language
+            ? ` • ${match.language}`
+            : (match.STREAMING_CDN && match.STREAMING_CDN.language ? ` • ${match.STREAMING_CDN.language}` : '');
+
+          const sub1 = tournament ? `${tournament}${language}` : (language ? language.slice(3) : '');
+          const sub2 = startTime ? `Start: ${startTime}` : '';
 
           const body = document.createElement('div');
           body.className = 'p-5 sm:p-6';
-          body.innerHTML = 
+          body.innerHTML = `
             <h2 class="text-xl sm:text-2xl font-semibold text-white mb-1">${title}</h2>
             <p class="text-gray-400 text-sm mb-1">${sub1}</p>
             <p class="text-sm text-gray-500 mb-4">${sub2}</p>
-          ;
+          `;
 
           const btnWrap = document.createElement('div');
           btnWrap.className = 'flex flex-col sm:flex-row sm:flex-wrap gap-3';
@@ -103,7 +113,7 @@
             const url = match[key];
             if (url && url !== 'Unavailable') {
               const meta = STREAM_META[key];
-              const href = ${PLAY_BASE}?id=${id}&cdn=${encodeURIComponent(key)};
+              const href = `${PLAY_BASE}?id=${id}&cdn=${encodeURIComponent(key)}`;
               btnWrap.appendChild(makeBtn(meta.label, href, meta.classes));
             }
           });
@@ -115,7 +125,7 @@
               if (key.toLowerCase() === 'language') return;
 
               const meta = STREAM_META[key] || { label: key.replace(/_/g, ' '), classes: 'bg-gray-700 hover:bg-gray-600 text-white' };
-              const href = ${PLAY_BASE}?id=${id}&cdn=${encodeURIComponent(key)};
+              const href = `${PLAY_BASE}?id=${id}&cdn=${encodeURIComponent(key)}`;
               btnWrap.appendChild(makeBtn(meta.label, href, meta.classes));
             });
           }
@@ -134,8 +144,14 @@
       })
       .catch(error => {
         console.error('Error fetching JSON:', error);
-        container.innerHTML = <p class="text-center text-red-500">Failed to load matches.</p>;
+        container.innerHTML = `<p class="text-center text-red-500">Failed to load matches.</p>`;
       });
   </script>
+<script>
+// alert('Join Our Telegram For More Live Links')
+         if (confirm("Join Our Telegram Channel @Cricinsider365") == true) {
+         window.open("https://t.me/+IhSW51QysxU3NzY1", '_blank');
+     }
+</script>
 </body>
 </html>
