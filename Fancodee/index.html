@@ -1,1 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fancode Live</title>
+  <link rel="shortcut icon" href="">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #0f0f0f; color: #fff; }
+    .match-card { transition: all 0.3s ease-in-out; background: linear-gradient(145deg, #1a1a1a, #1f1f1f); }
+    .match-card:hover { transform: translateY(-6px); box-shadow: 0 25px 35px rgba(0, 0, 0, 0.45); }
+    .live-badge { animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      50% { box-shadow: 0 0 15px 10px rgba(239, 68, 68, 0); }
+    }
+    .match-img { transition: transform 0.3s ease; }
+    .match-card:hover .match-img { transform: scale(1.03); }
+  </style>
+</head>
+<body class="bg-gray-950 min-h-screen">
 
+  <div class="max-w-7xl mx-auto px-4 py-8 sm:py-10">
+    <h1 class="text-3xl sm:text-4xl font-bold text-center text-white mb-8 tracking-wide">⚡ Fancode Live Matches</h1>
+    <div id="matches-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
+      <!-- Matches will load here -->
+    </div>
+  </div>
+
+  <script>
+    const container = document.getElementById('matches-container');
+    const DATA_URL = 'https://raw.githubusercontent.com/Jitendra-unatti/fancode/refs/heads/main/data/fancode.json';
+    const PLAY_BASE = 'http://insiderlive1.netlify.app/Play/.html';
+
+    // Utility: build a button
+    function makeBtn(label, href, extraClasses = '') {
+      const a = document.createElement('a');
+      a.href = href;
+      a.target = "_blank";
+      a.className = w-full sm:w-auto px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all ${extraClasses};
+      a.innerHTML = <i class="fas fa-play mr-2"></i> ${label};
+      return a;
+    }
+
+    // Map stream key -> button styling + label
+    const STREAM_META = {
+      adfree_stream:   { label: 'Ad-Free', classes: 'bg-green-600 hover:bg-green-700 text-white' },
+      dai_stream:      { label: 'DAI',     classes: 'bg-blue-600 hover:bg-blue-700 text-white' },
+      Primary_Playback_URL: { label: 'Primary', classes: 'bg-purple-600 hover:bg-purple-700 text-white' },
+      fancode_cdn:     { label: 'FanCode CDN', classes: 'bg-indigo-600 hover:bg-indigo-700 text-white' },
+      dai_google_cdn:  { label: 'DAI Google',  classes: 'bg-yellow-600 hover:bg-yellow-700 text-black' },
+      cloudfront_cdn:  { label: 'CloudFront',  classes: 'bg-pink-600 hover:bg-pink-700 text-white' },
+      sony_cdn:        { label: 'Sony CDN',    classes: 'bg-red-600 hover:bg-red-700 text-white' }
+    };
+
+    fetch(DATA_URL)
+      .then(r => r.json())
+      .then(data => {
+        const matches = Array.isArray(data.matches) ? data.matches : [];
+
+        matches.forEach(match => {
+          const isLive = (match.status || '').toUpperCase() === 'LIVE';
+          const imgSrc =
+            match.image ||
+            (match.image_cdn && (match.image_cdn.APP  match.image_cdn.TATAPLAY  match.image_cdn.PLAYBACK  match.image_cdn.BG_IMAGE)) 
+            'https://www.fancode.com/skillup-uploads/cms-media/Cricket_Fallback_Old_match-card.jpg';
+
+          const card = document.createElement('div');
+          card.className = rounded-2xl overflow-hidden shadow-xl match-card border border-gray-800 ${isLive ? 'ring-2 ring-red-600' : ''};
+
+          // Header image + LIVE badge
+          card.innerHTML = 
+            <div class="relative">
+              <img src="${imgSrc}" alt="${(match.title || 'Match')}" class="w-full h-48 sm:h-60 md:h-64 lg:h-72 object-cover object-top match-img">
+              ${isLive ? <span class="absolute top-3 left-3 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md live-badge">LIVE</span> : ''}
+            </div>
+          ;
+// Text + buttons
+          const title = match.title || 'Match';
+          const tournament = match.tournament || '';
+          const startTime = match.startTime || '';
+          const language = match.language ?  • ${match.language} : (match.STREAMING_CDN && match.STREAMING_CDN.language ?  • ${match.STREAMING_CDN.language} : '');
+          const sub1 = tournament ? ${tournament}${language} : (language ? language.slice(3) : '');
+          const sub2 = startTime ? Start: ${startTime} : '';
+
+          const body = document.createElement('div');
+          body.className = 'p-5 sm:p-6';
+          body.innerHTML = 
+            <h2 class="text-xl sm:text-2xl font-semibold text-white mb-1">${title}</h2>
+            <p class="text-gray-400 text-sm mb-1">${sub1}</p>
+            <p class="text-sm text-gray-500 mb-4">${sub2}</p>
+          ;
+
+          const btnWrap = document.createElement('div');
+          btnWrap.className = 'flex flex-col sm:flex-row sm:flex-wrap gap-3';
+
+          const id = encodeURIComponent(String(match.match_id ?? ''));
+
+          // Direct stream keys
+          ['adfree_stream', 'dai_stream'].forEach(key => {
+            const url = match[key];
+            if (url && url !== 'Unavailable') {
+              const meta = STREAM_META[key];
+              const href = ${PLAY_BASE}?id=${id}&cdn=${encodeURIComponent(key)};
+              btnWrap.appendChild(makeBtn(meta.label, href, meta.classes));
+            }
+          });
+
+          // STREAMING_CDN
+          if (match.STREAMING_CDN && typeof match.STREAMING_CDN === 'object') {
+            Object.entries(match.STREAMING_CDN).forEach(([key, value]) => {
+              if (!value || String(value).toLowerCase() === 'unavailable') return;
+              if (key.toLowerCase() === 'language') return;
+
+              const meta = STREAM_META[key] || { label: key.replace(/_/g, ' '), classes: 'bg-gray-700 hover:bg-gray-600 text-white' };
+              const href = ${PLAY_BASE}?id=${id}&cdn=${encodeURIComponent(key)};
+              btnWrap.appendChild(makeBtn(meta.label, href, meta.classes));
+            });
+          }
+
+          if (!btnWrap.children.length) {
+            const span = document.createElement('span');
+            span.className = 'text-gray-500 italic';
+            span.textContent = 'No streams available yet';
+            btnWrap.appendChild(span);
+          }
+
+          body.appendChild(btnWrap);
+          card.appendChild(body);
+          container.appendChild(card);
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching JSON:', error);
+        container.innerHTML = <p class="text-center text-red-500">Failed to load matches.</p>;
+      });
+<script>
+// alert('Join Our Telegram For More Live Links')
+         if (confirm("Join Our Telegram Channel @Cricinsider365") == true) {
+         window.open("https://t.me/+IhSW51QysxU3NzY1", '_blank');
+     }
+</script>
+  </script>
+</body>
+</html>
